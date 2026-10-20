@@ -61,7 +61,7 @@ export default function MyComplaints() {
                     <div className="min-w-0">
                       <p className="font-medium text-navy-800">{c.title}</p>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        {c.category} | {c.location_type === 'common_area' ? c.common_area : `Tower ${c.tower}, Flat ${c.flat}`} | {new Date(c.created_at).toLocaleDateString()}
+                        {c.category} | {c.location_type === 'common_area' ? c.common_area : c.location_type === 'high_rise' ? `High Rise - Tower ${c.tower}, Flat ${c.flat}` : `Low Rise - ${c.tower}, Flat ${c.flat}`} | {new Date(c.created_at).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">

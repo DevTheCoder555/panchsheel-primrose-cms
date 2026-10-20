@@ -30,7 +30,7 @@ export interface Complaint {
   category: string;
   problem_type: string;
   description: string;
-  location_type: 'tower_flat' | 'common_area';
+  location_type: 'high_rise' | 'low_rise' | 'common_area';
   tower?: string;
   flat?: string;
   common_area?: string;
@@ -43,12 +43,24 @@ export interface Complaint {
   rejection_reason?: string;
   rework_reason?: string;
   resolution_notes?: string;
+  due_date?: string;
+  escalation_level: number;
   created_at: string;
   updated_at: string;
   accepted_at?: string;
   assigned_at?: string;
   started_at?: string;
   completed_at?: string;
+}
+
+export interface ComplaintComment {
+  id: string;
+  complaint_id: string;
+  user_id: string;
+  user_name?: string;
+  user_role?: string;
+  comment: string;
+  created_at: string;
 }
 
 export interface ComplaintImage {

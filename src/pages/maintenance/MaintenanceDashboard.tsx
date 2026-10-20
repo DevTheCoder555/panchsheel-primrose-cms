@@ -138,7 +138,7 @@ export default function MaintenanceDashboard() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-medium text-navy-800 text-sm truncate">{c.title}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{c.category} | {c.location_type === 'common_area' ? c.common_area : `Tower ${c.tower}-${c.flat}`}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{c.category} | {c.location_type === 'common_area' ? c.common_area : c.location_type === 'high_rise' ? `HR-T${c.tower}-${c.flat}` : `LR-${c.tower}-${c.flat}`}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <StatusBadge status={c.status} />
@@ -164,7 +164,7 @@ export default function MaintenanceDashboard() {
 
               <dl className="space-y-1.5 text-sm mb-4">
                 <div className="flex justify-between"><dt className="text-slate-500">Category</dt><dd>{selected.category} - {selected.problem_type}</dd></div>
-                <div className="flex justify-between"><dt className="text-slate-500">Location</dt><dd>{selected.location_type === 'common_area' ? selected.common_area : `Tower ${selected.tower}, Flat ${selected.flat}`}</dd></div>
+                <div className="flex justify-between"><dt className="text-slate-500">Location</dt><dd>{selected.location_type === 'common_area' ? selected.common_area : selected.location_type === 'high_rise' ? `High Rise - Tower ${selected.tower}, Flat ${selected.flat}` : `Low Rise - ${selected.tower}, Flat ${selected.flat}`}</dd></div>
                 <div className="flex justify-between"><dt className="text-slate-500">Priority</dt><dd><PriorityBadge priority={selected.official_priority || selected.suggested_priority} /></dd></div>
               </dl>
 

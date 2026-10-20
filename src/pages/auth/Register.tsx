@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { TOWERS } from '../../lib/constants';
+import { HIGH_RISE_TOWERS, LOW_RISE_TOWERS } from '../../lib/constants';
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -65,7 +65,12 @@ export default function Register() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Tower</label>
                 <select value={form.tower} onChange={(e) => update('tower', e.target.value)} className={inputClass}>
                   <option value="">Select</option>
-                  {TOWERS.map((t) => <option key={t} value={t}>Tower {t}</option>)}
+                  <optgroup label="High Rise (1-11)">
+                    {HIGH_RISE_TOWERS.map((t: string) => <option key={`hr-${t}`} value={t}>Tower {t}</option>)}
+                  </optgroup>
+                  <optgroup label="Low Rise (B-1 to B-39)">
+                    {LOW_RISE_TOWERS.map((t: string) => <option key={`lr-${t}`} value={t}>{t}</option>)}
+                  </optgroup>
                 </select>
               </div>
               <div>

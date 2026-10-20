@@ -53,7 +53,9 @@ export const PRIORITY_CONFIG: Record<Priority, { label: string; color: string; b
   urgent: { label: 'Urgent', color: 'text-red-600', bg: 'bg-red-100' },
 };
 
-export const TOWERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+// Location types
+export const HIGH_RISE_TOWERS = Array.from({ length: 11 }, (_, i) => String(i + 1)); // 1 to 11
+export const LOW_RISE_TOWERS = Array.from({ length: 39 }, (_, i) => `B-${i + 1}`); // B-1 to B-39
 
 export const COMMON_AREAS = [
   'Lobby',
@@ -67,5 +69,34 @@ export const COMMON_AREAS = [
   'Rooftop',
   'Main Gate',
   'Peripheral Road',
+  'Lift Lobby',
+  'Stairwell',
+  'Basement',
+  'Terrace',
+  'Other',
+];
+
+// SLA hours by priority (how long before auto-escalation)
+export const SLA_HOURS: Record<Priority, number> = {
+  low: 72, // 3 days
+  medium: 48, // 2 days
+  high: 24, // 1 day
+  urgent: 4, // 4 hours
+};
+
+// Technician types
+export const TECHNICIAN_TYPES = [
+  'Electrician',
+  'Plumber',
+  'Carpenter',
+  'Painter',
+  'Mason',
+  'AC Technician',
+  'Lift Technician',
+  'Pest Control',
+  'Cleaner',
+  'Security Guard',
+  'Gardener',
+  'General Handyman',
   'Other',
 ];

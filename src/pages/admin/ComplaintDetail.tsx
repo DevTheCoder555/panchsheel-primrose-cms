@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { StatusBadge, PriorityBadge } from '../../components/StatusBadge';
 import { PRIORITY_CONFIG } from '../../lib/constants';
-import type { Complaint, Profile, ComplaintImage } from '../../types';
+import type { Complaint, Profile, ComplaintImage, ComplaintComment } from '../../types';
 
 export default function ComplaintDetail() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +23,9 @@ export default function ComplaintDetail() {
   const [showAssign, setShowAssign] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState('');
   const [newPriority, setNewPriority] = useState<string>('');
+  const [comments, setComments] = useState<ComplaintComment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
 
   useEffect(() => { if (id) loadComplaint(id); }, [id]);
 
@@ -49,6 +52,7 @@ export default function ComplaintDetail() {
         }));
         setImages(withUrls);
       }
+      await loadComments(complaintId);
     }
     // Load maintenance staff for assignment
     const { data: staffData } = await supabase.from('profiles').select('*').eq('role', 'maintenance');
@@ -123,6 +127,39 @@ export default function ComplaintDetail() {
     await supabase.from('activity_logs').insert({ complaint_id: complaintId, action, performed_by: performedBy, details });
   }
 
+  async function loadComments(complaintId: string) {
+    const { data } = await supabase
+      .from('complaint_comments')
+      .select('*, profiles(full_name, role)')
+      .eq('complaint_id', complaintId)
+      .order('created_at', { ascending: true });
+    if (data) {
+      const mapped = data.map((c: Record<string, unknown>) => ({
+        id: c.id as string,
+        complaint_id: c.complaint_id as string,
+        user_id: c.user_id as string,
+        comment: c.comment as string,
+        created_at: c.created_at as string,
+        user_name: (c.profiles as Record<string, unknown>)?.full_name as string || 'Unknown',
+        user_role: (c.profiles as Record<string, unknown>)?.role as string || 'unknown',
+      }));
+      setComments(mapped);
+    }
+  }
+
+  async function addComment() {
+    if (!complaint || !profile || !newComment.trim()) return;
+    setCommentLoading(true);
+    await supabase.from('complaint_comments').insert({
+      complaint_id: complaint.id,
+      user_id: profile.id,
+      comment: newComment.trim(),
+    });
+    setNewComment('');
+    await loadComments(complaint.id);
+    setCommentLoading(false);
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-3 border-navy-600 border-t-transparent rounded-full animate-spin" /></div>;
   }
@@ -164,10 +201,31 @@ export default function ComplaintDetail() {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between"><dt className="text-slate-500">Category</dt><dd className="font-medium">{complaint.category}</dd></div>
             <div className="flex justify-between"><dt className="text-slate-500">Problem Type</dt><dd className="font-medium">{complaint.problem_type}</dd></div>
-            <div className="flex justify-between"><dt className="text-slate-500">Location</dt><dd className="font-medium">{complaint.location_type === 'common_area' ? complaint.common_area : `Tower ${complaint.tower}, Flat ${complaint.flat}`}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">Location</dt><dd className="font-medium">
+              {complaint.location_type === 'common_area' 
+                ? complaint.common_area 
+                : complaint.location_type === 'high_rise' 
+                  ? `High Rise - Tower ${complaint.tower}, Flat ${complaint.flat}`
+                  : `Low Rise - ${complaint.tower}, Flat ${complaint.flat}`}
+            </dd></div>
             {complaint.required_technician && <div className="flex justify-between"><dt className="text-slate-500">Required Technician</dt><dd className="font-medium">{complaint.required_technician}</dd></div>}
             <div className="flex justify-between"><dt className="text-slate-500">Suggested Priority</dt><dd><PriorityBadge priority={complaint.suggested_priority} /></dd></div>
             {complaint.official_priority && <div className="flex justify-between"><dt className="text-slate-500">Official Priority</dt><dd><PriorityBadge priority={complaint.official_priority} /></dd></div>}
+            {complaint.due_date && (
+              <div className="flex justify-between">
+                <dt className="text-slate-500">Due Date</dt>
+                <dd className={`font-medium ${new Date(complaint.due_date) < new Date() && !['completed', 'rejected'].includes(complaint.status) ? 'text-red-600' : 'text-slate-700'}`}>
+                  {new Date(complaint.due_date).toLocaleString()}
+                  {new Date(complaint.due_date) < new Date() && !['completed', 'rejected'].includes(complaint.status) && ' (OVERDUE)'}
+                </dd>
+              </div>
+            )}
+            {complaint.escalation_level > 0 && (
+              <div className="flex justify-between">
+                <dt className="text-slate-500">Escalations</dt>
+                <dd className="font-medium text-orange-600">{complaint.escalation_level} time{complaint.escalation_level > 1 ? 's' : ''}</dd>
+              </div>
+            )}
           </dl>
           <div className="mt-3 pt-3 border-t border-slate-100">
             <p className="text-slate-500 text-xs mb-1">Description</p>
@@ -240,6 +298,53 @@ export default function ComplaintDetail() {
           </div>
         </div>
       )}
+
+      {/* Comments Section */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+        <h3 className="font-semibold text-navy-800 mb-4">Comments & Notes</h3>
+        
+        {/* Comments list */}
+        {comments.length > 0 ? (
+          <div className="space-y-3 mb-4">
+            {comments.map((comment) => (
+              <div key={comment.id} className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-navy-100 flex items-center justify-center text-xs font-medium text-navy-700 flex-shrink-0">
+                  {comment.user_name?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-navy-800">{comment.user_name}</span>
+                    <span className="text-xs text-slate-400 px-1.5 py-0.5 bg-slate-100 rounded">{comment.user_role}</span>
+                    <span className="text-xs text-slate-400">{new Date(comment.created_at).toLocaleString()}</span>
+                  </div>
+                  <p className="text-sm text-slate-700">{comment.comment}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400 mb-4">No comments yet</p>
+        )}
+
+        {/* Add comment */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a comment..."
+            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-navy-500 focus:border-navy-500 outline-none"
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(); } }}
+          />
+          <button
+            onClick={addComment}
+            disabled={!newComment.trim() || commentLoading}
+            className="px-4 py-2 bg-navy-700 text-white rounded-lg text-sm font-medium hover:bg-navy-800 disabled:opacity-50 transition"
+          >
+            {commentLoading ? '...' : 'Send'}
+          </button>
+        </div>
+      </div>
 
       {/* Actions */}
       <div className="bg-white rounded-xl border border-slate-200 p-5">
