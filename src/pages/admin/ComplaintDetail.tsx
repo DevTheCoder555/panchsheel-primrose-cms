@@ -376,6 +376,12 @@ export default function ComplaintDetail() {
           {complaint.status === 'accepted' && (
             <button onClick={() => setShowAssign(true)} className={`${btnClass} bg-navy-700 text-white hover:bg-navy-800`}>Assign Staff</button>
           )}
+          {['assigned', 'in_progress'].includes(complaint.status) && (
+            <>
+              <button onClick={() => setShowAssign(true)} className={`${btnClass} bg-navy-700 text-white hover:bg-navy-800`}>Reassign Staff</button>
+              <button onClick={() => setShowReject(true)} className={`${btnClass} bg-red-600 text-white hover:bg-red-700`}>Cancel Complaint</button>
+            </>
+          )}
           {complaint.status === 'resolution_submitted' && (
             <>
               <button onClick={approveCompletion} disabled={actionLoading} className={`${btnClass} bg-green-600 text-white hover:bg-green-700`}>Approve & Complete</button>
